@@ -3,6 +3,8 @@ import time
 import json
 
 print('it will take for a while')
+token = '958eb5d439726565e9333aa30e50e0f937ee432e927f0dbd541c541887d919a7c56f95c04217915c32008'
+user_id = 171691064
 
 
 class User:
@@ -87,56 +89,57 @@ class User:
         return result
 
 
-# Токен и ID пользователя
-token = '958eb5d439726565e9333aa30e50e0f937ee432e927f0dbd541c541887d919a7c56f95c04217915c32008'
-user_id = 171691064
 
-# Если было введено username, то преобразуем его в user_id
-response = requests.get(
-    url='https://api.vk.com/method/users.get',
-    params=dict(
-        user_ids=user_id,
-        access_token=token,
-        v=5.61,
+
+    # Если было введено username, то преобразуем его в user_id
+    response = requests.get(
+        url='https://api.vk.com/method/users.get',
+        params=dict(
+            user_ids=user_id,
+            access_token=token,
+            v=5.61,
+        )
     )
-)
-user_id = response.json()['response'][0]['id']
-def groups_data():
-    # Считываем данные о группах
-    user_group = self.get_group(user_id, token)
-    user_frinds_group = self.get_frinds_group_id(user_id, token)
-    unique_group = user_group - user_frinds_group
+    user_id = response.json()['response'][0]['id']
 
-    # Записываем json файл
-    result = []
-    for k, group in enumerate(unique_group):
-        # Получаем информацию об уникальных группах пользователя
-        response = requests.get(
-            url='https://api.vk.com/method/groups.getById',
-            params=dict(
-                group_id=group,
-                access_token=token,
-                v=5.61,
-                fields='members_count'
+    def groups_data(self):
+        # Считываем данные о группах
+        user_group = self.get_group(user_id, token)
+        user_frinds_group = self.get_frinds_group_id(user_id, token)
+        unique_group = user_group - user_frinds_group
+
+        # Записываем json файл
+        result = []
+        for k, group in enumerate(unique_group):
+            # Получаем информацию об уникальных группах пользователя
+            response = requests.get(
+                url='https://api.vk.com/method/groups.getById',
+                params=dict(
+                    group_id=group,
+                    access_token=token,
+                    v=5.61,
+                    fields='members_count'
+                )
             )
-        )
-        response = response.json()['response'][0]
-        if 'members_count' in response.keys():
-            members_count = response['members_count']
-        else:
-            members_count = 'Не известно'
-        result.append(
-            dict(
-                name=response['name'],
-                gid=response['id'],
-                members_count=members_count
+            response = response.json()['response'][0]
+            if 'members_count' in response.keys():
+                members_count = response['members_count']
+            else:
+                members_count = 'Не известно'
+            result.append(
+                dict(
+                    name=response['name'],
+                    gid=response['id'],
+                    members_count=members_count
+                )
             )
-        )
-        time.sleep(0.4)
-        print(
-            f'Нашли информацию о {k/len(unique_group)*100:.2f} % уникальных группах',
-            end="\r"
-        )
-with open('groups.json', 'w') as foud:
-    json.dump(result, foud, ensure_ascii=True, indent=4)
+            time.sleep(0.4)
+            print(
+                f'Нашли информацию о {k/len(unique_group)*100:.2f} % уникальных группах',
+                end="\r"
+            )
+            return result
+
+        with open('groups.json', 'w') as foud:
+            json.dump(result, foud, ensure_ascii=True, indent=4)
 
